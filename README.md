@@ -5,13 +5,13 @@ Catálogo web profesional de alimentación y nutrición con panel de administrac
 ## Características
 
 - **Catálogo público** para clientes: inicio, catálogo con búsqueda y filtros, ficha de producto con propiedades y características.
-- **Panel admin** (`/admin.html`): crear, editar, destacar, ocultar y eliminar productos. Solo `admin` puede modificarlos.
-- **Base de datos SQLite** persistente. Estética de herboristería minimalista y elegante.
+- **Panel admin** (`/admin.html`): crear, editar, destacar, ocultar y eliminar productos. Los cambios se ven al instante en la web pública.
+- **Base de datos persistente**: SQLite en local, PostgreSQL en producción (Neon). Estética de herboristería minimalista y elegante.
 
 ## Usuarios y contraseñas
 
 - **Admin:** usuario `admin`, contraseña `admin` (por defecto).
-- Para cambiarla en producción: `ADMIN_PASSWORD=miclave npm start`.
+- En producción usa la variable `ADMIN_PASSWORD` para tu propia clave.
 
 ## Cómo ejecutar en local
 
@@ -22,38 +22,46 @@ npm start
 
 Abre http://localhost:3000
 
-## Cómo publicar gratis en internet (Glitch)
+- En local usa SQLite (archivo `data/tienda.db`).
+- Si defines `DATABASE_URL` usa PostgreSQL en su lugar.
 
-**Glitch** permite alojar apps de Node gratis con almacenamiento persistente (SQLite sobrevive a reinicios), sin tarjeta de crédito.
+## Cómo publicar gratis en internet (Render + Neon)
 
-1. Crea una cuenta gratuita en https://glitch.com (puedes entrar con tu cuenta de Google o GitHub).
-2. Crea un repositorio en GitHub con estos archivos:
-   - Botón **"+"** → *New repository* (público).
-   - Sube el contenido del proyecto (arrastra los archivos; no hace falta `node_modules/` ni `data/`).
-3. En Glitch: botón **"New Project"** → **"Import from GitHub"** → pega la URL de tu repositorio.
-4. Espera a que instale dependencias (2-3 minutos). La app arranca sola con `npm start`.
-5. Tu web queda publicada en `https://TU-NOMBRE.glitch.me`.
+**Neon** guarda la base de datos PostgreSQL (plan gratis, sin fecha de caducidad). **Render** aloja la web (plan gratis, sin tarjeta). Cada vez que editas productos desde el panel admin, los clientes los ven al instante.
 
-### Cambiar la contraseña del admin en Glitch
+### 1. Crear la base de datos en Neon
 
-- En Glitch, abre el archivo `.env` (o pestaña **Env**) y añade:
-  ```
-  ADMIN_PASSWORD=tuclave_segura
-  ```
-- Reinicia la app (botón **Tools → Restart**).
+1. Crea una cuenta gratis en https://neon.tech (con Google/GitHub/email).
+2. Crea un proyecto: *New Project* → elige región (p. ej. `Frankfurt`) → *Create Project*.
+3. En *Connection Details* copia el **Connection String** con `psql` o directamente:
+   ```
+   postgresql://USER:PASSWORD@EP.neon.tech/verdevida?sslmode=require
+   ```
+   Guárdalo; lo pegarás en Render (paso 3).
 
-### Configurar la contraseña al arrancar
+### 2. Crear la web en Render
 
-Cualquier host puede definir `ADMIN_PASSWORD`. Si la app ya se inició una vez, la contraseña queda guardada en la base de datos y `ADMIN_PASSWORD` no la sobrescribe. Para forzarla, borra el archivo `data/tienda.db` y reinicia (perderás los cambios).
+1. Crea una cuenta gratis en https://render.com.
+2. **New** → **Blueprint** → elige el repositorio GitHub `yeraiiii/verde-vida`. Render lee `render.yaml` y prepara el despliegue automáticamente.
+3. En *Environment*, define estas variables:
+   - `DATABASE_URL`: el Connection String de Neon del paso 1.
+   - `ADMIN_PASSWORD`: tu contraseña para el panel admin (la que quieras).
+   - `SESSION_SECRET`: cualquier texto largo aleatorio (o deja que Render lo genere).
+4. *Apply* → Render instala, arranca y te da una URL pública tipo `https://verde-vida.onrender.com`.
 
-## Despliegue en Render (alternativa)
+> La primera vez, el panel crea los productos de ejemplo. Entra en `https://TU-URL/admin` con `admin` / tu `ADMIN_PASSWORD`.
 
-Render también tiene tier gratis sin tarjeta, pero su almacenamiento es efímero: **la base de datos se pierde al reiniciar o hacer deploy**. Por eso se recomienda Glitch para guardar datos.
+### Notas
+
+- El plan gratis de Render **"duerme"** el sitio tras ~15 min sin visitas. Al abrir la URL se despierta solo (tarda unos segundos) y **no pierde datos** (están en Neon).
+- Los cambios del panel admin se ven al instante en la web pública; no hace falta redeploy.
+- Para publicar una versión nueva de la web, haz *push* a GitHub: Render redeploy automáticamente.
 
 ## Estructura
 
 ```
-server.js          Servidor Express + API + SQLite
+server.js          Servidor Express + API
+db.js              Capa de base de datos (SQLite local / PostgreSQL producción)
 public/
   index.html       Inicio (hero, categorías, destacados)
   catalogo.html    Catálogo con búsqueda y filtros
