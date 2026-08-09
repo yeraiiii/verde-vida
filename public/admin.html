@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración · Verde Vida</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main>
+    <!-- Vista de login -->
+    <div id="login-view" class="login-wrap">
+      <div class="login-card">
+        <h1>Administración</h1>
+        <p class="sub">Accede para gestionar el catálogo</p>
+        <div id="login-notice" class="notice hidden"></div>
+        <form id="login-form">
+          <div class="field">
+            <label for="username">Usuario</label>
+            <input type="text" id="username" name="username" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="login-btn">Entrar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Vista de gestión -->
+    <div id="panel-view" class="hidden">
+      <section class="section">
+        <div class="container">
+          <div class="admin-toolbar">
+            <h1>Gestión del catálogo</h1>
+            <div class="admin-actions">
+              <button class="btn btn-primary" id="btn-new">+ Nuevo producto</button>
+              <button class="btn btn-ghost" id="btn-logout">Cerrar sesión</button>
+            </div>
+          </div>
+
+          <div id="admin-notice" class="notice hidden"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Imagen</th>
+                  <th>Producto</th>
+                  <th>Categoría</th>
+                  <th>Precio</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="products-tbody">
+                <tr><td colspan="6" class="text-center muted"><div class="spinner"></div> Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Modal de producto -->
+      <div id="product-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-card">
+          <h2 id="modal-title">Nuevo producto</h2>
+          <div id="modal-notice" class="notice hidden"></div>
+          <form id="product-form">
+            <div class="form-grid">
+              <div class="field">
+                <label for="f-name">Nombre *</label>
+                <input type="text" id="f-name" required>
+              </div>
+              <div class="field">
+                <label for="f-category">Categoría *</label>
+                <select id="f-category" required></select>
+              </div>
+              <div class="field">
+                <label for="f-price">Precio (€) *</label>
+                <input type="number" id="f-price" step="0.01" min="0" required>
+              </div>
+              <div class="field">
+                <label for="f-unit">Unidad</label>
+                <input type="text" id="f-unit" placeholder="500 ml, 1 kg…">
+              </div>
+              <div class="field full">
+                <label for="f-short">Descripción corta *</label>
+                <textarea id="f-short" rows="2" required></textarea>
+              </div>
+              <div class="field full">
+                <label for="f-long">Descripción larga *</label>
+                <textarea id="f-long" rows="4" required></textarea>
+              </div>
+              <div class="field full">
+                <label for="f-image">URL de imagen</label>
+                <input type="text" id="f-image" placeholder="/img/producto.svg o https://…">
+                <img id="f-image-preview" class="img-preview hidden" alt="Vista previa">
+              </div>
+            </div>
+
+            <div class="repeater">
+              <div class="repeater-header">
+                <h3>Propiedades</h3>
+                <button type="button" class="btn btn-mini btn-outline add-prop">+ Añadir</button>
+              </div>
+              <div id="prop-list"></div>
+            </div>
+
+            <div class="repeater">
+              <div class="repeater-header">
+                <h3>Características</h3>
+                <button type="button" class="btn btn-mini btn-outline add-char">+ Añadir</button>
+              </div>
+              <div id="char-list"></div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field full check-row">
+                <input type="checkbox" id="f-featured">
+                <label for="f-featured" style="margin:0">Producto destacado</label>
+              </div>
+              <div class="field full check-row">
+                <input type="checkbox" id="f-active" checked>
+                <label for="f-active" style="margin:0">Visible en el catálogo</label>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; justify-content:flex-end">
+              <button type="button" class="btn btn-ghost" id="btn-cancel">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar producto</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/admin.js"></script>
+</body>
+</html>

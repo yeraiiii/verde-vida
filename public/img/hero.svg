@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#dbe7dd"/>
+      <stop offset="100%" stop-color="#f3ecdf"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5c7d6a"/>
+      <stop offset="100%" stop-color="#2f4f3e"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="600" fill="url(#bg)"/>
+  <circle cx="760" cy="90" r="160" fill="#ffffff" opacity="0.2"/>
+  <circle cx="90" cy="540" r="200" fill="#ffffff" opacity="0.15"/>
+
+  <!-- Frasco -->
+  <rect x="300" y="150" width="300" height="360" rx="28" fill="#ffffff" opacity="0.92"/>
+  <rect x="330" y="60" width="240" height="110" rx="16" fill="#ffffff" opacity="0.92"/>
+  <rect x="345" y="80" width="210" height="70" rx="10" fill="#6b8f71"/>
+  <text x="450" y="122" font-family="Georgia, serif" font-size="30" fill="#ffffff" text-anchor="middle" font-weight="bold">Verde</text>
+  <text x="450" y="148" font-family="Georgia, serif" font-size="26" fill="#eaf1eb" text-anchor="middle" letter-spacing="4">VIDA</text>
+
+  <!-- Hojas dentro -->
+  <g>
+    <path d="M430 210 q40 -50 80 -20 q-10 60 -50 70 q-30 10 -30 -20z" fill="url(#leaf)"/>
+    <path d="M470 250 q40 -30 60 0 q-10 50 -40 55 q-30 8 -20 -25z" fill="#5c7d6a"/>
+    <path d="M420 290 q-50 -20 -70 10 q10 45 45 50 q30 8 25 -20z" fill="#6b8f71"/>
+    <circle cx="455" cy="360" r="7" fill="#a58b5f"/>
+    <circle cx="490" cy="340" r="6" fill="#a58b5f"/>
+    <circle cx="420" cy="380" r="5" fill="#9b6b43"/>
+  </g>
+
+  <!-- Manchas orgánicas -->
+  <circle cx="160" cy="200" r="34" fill="#a58b5f" opacity="0.25"/>
+  <circle cx="150" cy="215" r="22" fill="#a58b5f" opacity="0.2"/>
+  <circle cx="740" cy="420" r="40" fill="#5c7d6a" opacity="0.2"/>
+
+  <text x="450" y="555" font-family="Georgia, serif" font-size="22" fill="#5c7d6a" text-anchor="middle" letter-spacing="3" opacity="0.9">alimentación · nutrición</text>
+</svg>

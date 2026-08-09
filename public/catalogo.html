@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo · Verde Vida</title>
+  <meta name="description" content="Catálogo completo de productos de alimentación y nutrición de la herboristería Verde Vida.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main>
+    <section class="section" style="padding-bottom:0">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-eyebrow">Catálogo completo</div>
+          <h1>Nuestros productos</h1>
+          <p>Todos los productos disponibles en nuestra tienda, con sus propiedades y características.</p>
+        </div>
+
+        <div style="display:flex; justify-content:center; margin-bottom:2rem">
+          <form id="search-form" style="width:min(520px,100%); display:flex; gap:0.5rem">
+            <input
+              id="search-input"
+              type="search"
+              placeholder="Buscar producto… (ej. avena, miel, magnesio)"
+              style="flex:1; padding:0.75rem 1rem; border:1px solid var(--borde); border-radius:999px; font-size:0.95rem; background:#fff"
+            >
+            <button type="submit" class="btn btn-primary" style="padding:0.75rem 1.4rem">Buscar</button>
+          </form>
+        </div>
+
+        <div class="categories" id="categorias" style="margin-bottom:2.5rem"></div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="container">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.75rem">
+          <h2 id="results-title" style="font-family:var(--serif); color:var(--verde-oscuro); font-size:1.4rem">Todos los productos</h2>
+          <span id="results-count" class="muted" style="font-size:0.9rem"></span>
+        </div>
+        <div class="product-grid" id="product-grid">
+          <div class="empty-state"><div class="spinner"></div><p>Cargando productos…</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/catalogo.js"></script>
+</body>
+</html>
