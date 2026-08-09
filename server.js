@@ -10,9 +10,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Directorio de datos persistente
-// Glitch expone /.data (persistente), Render/Koyeb usan DATA_DIR o PWD_DIR,
-// local: ./data
-const DEFAULT_DATA_DIR = process.env.PROJECT_DOMAIN ? "/.data" : path.join(__dirname, "data");
+// Glitch: carpeta .data en la raíz del proyecto (persistente).
+// Render/Koyeb usan DATA_DIR o PWD_DIR; local: ./data
+const DEFAULT_DATA_DIR = process.env.PROJECT_DOMAIN
+  ? path.join(process.cwd(), ".data")
+  : path.join(__dirname, "data");
 const DATA_DIR = process.env.DATA_DIR || process.env.PWD_DIR || DEFAULT_DATA_DIR;
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
