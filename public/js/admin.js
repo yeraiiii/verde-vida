@@ -85,15 +85,15 @@ async function loadProducts() {
       const cat = categoriesCache.find((c) => c.id === p.category_id);
       return `
       <tr>
-        <td><img class="table-img" src="${p.image}" alt="${p.name}"></td>
-        <td><strong>${p.name}</strong><br><span class="muted" style="font-size:0.8rem">${p.unit}</span></td>
-        <td>${cat ? cat.name : "—"}</td>
-        <td>${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(p.price)}</td>
-        <td>${p.active ? '<span class="badge active">Visible</span>' : '<span class="badge inactive">Oculto</span>'} ${p.featured ? '<span class="badge active" style="background:var(--crema-suave)">★</span>' : ""}</td>
-        <td>
+        <td data-label="Imagen"><img class="table-img" src="${p.image}" alt="${p.name}"></td>
+        <td data-label="Producto"><strong>${p.name}</strong><br><span class="muted" style="font-size:0.8rem">${p.unit}</span></td>
+        <td data-label="Categoría">${cat ? cat.name : "—"}</td>
+        <td data-label="Precio">${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(p.price)}</td>
+        <td data-label="Estado">${p.active ? '<span class="badge active">Visible</span>' : '<span class="badge inactive">Oculto</span>'} ${p.featured ? '<span class="badge active" style="background:var(--crema-suave)">★</span>' : ""}</td>
+        <td data-label="">
           <div class="actions">
-            <button class="icon-btn edit" data-id="${p.id}" title="Editar">✏️</button>
-            <button class="icon-btn del" data-id="${p.id}" title="Eliminar">🗑️</button>
+            <button class="icon-btn edit" data-id="${p.id}" title="Editar">✏️ Editar</button>
+            <button class="icon-btn del" data-id="${p.id}" title="Eliminar">🗑️ Eliminar</button>
           </div>
         </td>
       </tr>`;
