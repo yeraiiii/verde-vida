@@ -254,12 +254,15 @@ async function initAdmin() {
   }
 }
 
+// SQLite ya devuelve COUNT() como entero; PostgreSQL necesita cast (int8 -> number).
+const COUNT_CAST = db.engine === "postgres" ? "::int" : "";
+
 // ---------- API pública ----------
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.get("/api/categories", wrap(async (_req, res) => {
   const rows = await db.all(`
-    SELECT c.id, c.name, c.slug, COUNT(p.id)::int AS product_count
+    SELECT c.id, c.name, c.slug, COUNT(p.id)${COUNT_CAST} AS product_count
     FROM categories c LEFT JOIN products p ON p.category_id = c.id AND p.active = 1
     GROUP BY c.id ORDER BY c.name
   `);
@@ -376,7 +379,7 @@ app.put("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
 
 app.delete("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
   const id = Number(req.params.id);
-  const count = await db.get("SELECT COUNT(*)::int AS n FROM products WHERE category_id = ?", [id]);
+  const count = await db.get(`SELECT COUNT(*)${COUNT_CAST} AS n FROM products WHERE category_id = ?`, [id]);
   if (count.n > 0) {
     return res.status(400).json({ error: `No se puede eliminar: tiene ${count.n} producto(s). Mueve o elimina primero sus productos.` });
   }
@@ -387,7 +390,7 @@ app.delete("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
 app.get("/api/admin/settings", requireAdmin, wrap(async (_req, res) => {
   res.json({
     categories: await db.all(`
-      SELECT c.id, c.name, c.slug, COUNT(p.id)::int AS product_count
+      SELECT c.id, c.name, c.slug, COUNT(p.id)${COUNT_CAST} AS product_count
       FROM categories c LEFT JOIN products p ON p.category_id = c.id
       GROUP BY c.id ORDER BY c.name
     `),
