@@ -80,6 +80,54 @@ const db = {
     }
   },
 
+  // Ejecuta fn con un runner de consultas dentro de una transacción atómica.
+  // En Postgres usa una conexión dedicada + advisory lock (serializa siembras
+  // concurrentes entre instancias); en SQLite usa BEGIN EXCLUSIVE.
+  async tx(fn) {
+    if (USE_POSTGRES) {
+      const client = await pool.connect();
+      const runner = {
+        all: async (sql, params = []) => (await client.query(toPostgres(sql), params)).rows,
+        get: async (sql, params = []) => (await client.query(toPostgres(sql), params)).rows[0],
+        run: async (sql, params = []) => {
+          await client.query(toPostgres(sql), params);
+        },
+        insert: async (sql, params = []) =>
+          Number((await client.query(toPostgres(sql) + " RETURNING id", params)).rows[0].id),
+      };
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(845120001)");
+        const out = await fn(runner);
+        await client.query("COMMIT");
+        return out;
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+
+    sqlite.exec("BEGIN EXCLUSIVE");
+    const runner = {
+      all: (sql, params = []) => sqlite.prepare(sql).all(...params),
+      get: (sql, params = []) => sqlite.prepare(sql).get(...params),
+      run: (sql, params = []) => {
+        sqlite.prepare(sql).run(...params);
+      },
+      insert: (sql, params = []) => Number(sqlite.prepare(sql).run(...params).lastInsertRowid),
+    };
+    try {
+      const out = await fn(runner);
+      sqlite.exec("COMMIT");
+      return out;
+    } catch (err) {
+      sqlite.exec("ROLLBACK");
+      throw err;
+    }
+  },
+
   async close() {
     if (pool) await pool.end();
     if (sqlite) sqlite.close();

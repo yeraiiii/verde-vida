@@ -168,44 +168,47 @@ const CATEGORY_DESCRIPTIONS = {
   otros: "Higiene, cosmética y otros complementos.",
 };
 
-async function resetCatalog() {
-  await db.run("DELETE FROM products");
-  await db.run("DELETE FROM categories");
-  try {
-    await db.run("DELETE FROM sqlite_sequence WHERE name IN ('products','categories')");
-  } catch {}
-}
-
 async function seed() {
   const stored = (await db.get("SELECT value FROM settings WHERE key = 'seed_version'"))?.value;
   if (stored === String(SEED_VERSION)) return;
 
-  await resetCatalog();
-
-  for (const cat of CATEGORIES) {
-    await db.run("INSERT INTO categories (name, slug) VALUES (?, ?)", [cat.name, cat.slug]);
-  }
-  const catId = async (slug) => (await db.get("SELECT id FROM categories WHERE slug = ?", [slug])).id;
-
-  let count = 0;
-  for (const brand of BRANDS) {
-    for (const p of brand.items) {
-      const cid = await catId(p.cat);
-      const image = makeImage(`${brand.brand} ${p.name}`, p.cat, brand.brand);
-      const short = CATEGORY_DESCRIPTIONS[p.cat] || "";
-      await db.run(
-        `INSERT INTO products (name, category_id, price, unit, brand, stock, short_desc, long_desc, image, properties, characteristics, featured, active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [p.name, cid, 0, p.unit || "", brand.brand, p.stock || 0, short,
-         `${short} Marca ${brand.brand}. Consulta en tienda para más información.`,
-         image, JSON.stringify([]), JSON.stringify([`Marca: ${brand.brand}`, p.unit ? `Presentación: ${p.unit}` : ""].filter(Boolean)), 0, p.stock > 0 ? 1 : 0]
-      );
-      count++;
+  // Toda la siembra va en una transacción atómica: si algo falla se hace ROLLBACK
+  // y la BD queda en estado consistente. En Postgres un advisory lock serializa
+  // las siembras concurrentes entre instancias (evita violaciones de FK).
+  await db.tx(async (q) => {
+    await q.run("DELETE FROM products");
+    await q.run("DELETE FROM categories");
+    if (db.engine === "sqlite") {
+      try {
+        await q.run("DELETE FROM sqlite_sequence WHERE name IN ('products','categories')");
+      } catch {}
     }
-  }
 
-  await db.run("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", ["seed_version", String(SEED_VERSION)]);
-  console.log(`[seed] Cargados ${count} productos reales (${BRANDS.length} marcas, ${CATEGORIES.length} categorías).`);
+    for (const cat of CATEGORIES) {
+      await q.run("INSERT INTO categories (name, slug) VALUES (?, ?)", [cat.name, cat.slug]);
+    }
+    const catId = async (slug) => (await q.get("SELECT id FROM categories WHERE slug = ?", [slug])).id;
+
+    let count = 0;
+    for (const brand of BRANDS) {
+      for (const p of brand.items) {
+        const cid = await catId(p.cat);
+        const image = makeImage(`${brand.brand} ${p.name}`, p.cat, brand.brand);
+        const short = CATEGORY_DESCRIPTIONS[p.cat] || "";
+        await q.run(
+          `INSERT INTO products (name, category_id, price, unit, brand, stock, short_desc, long_desc, image, properties, characteristics, featured, active)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [p.name, cid, 0, p.unit || "", brand.brand, p.stock || 0, short,
+           `${short} Marca ${brand.brand}. Consulta en tienda para más información.`,
+           image, JSON.stringify([]), JSON.stringify([`Marca: ${brand.brand}`, p.unit ? `Presentación: ${p.unit}` : ""].filter(Boolean)), 0, p.stock > 0 ? 1 : 0]
+        );
+        count++;
+      }
+    }
+
+    await q.run("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", ["seed_version", String(SEED_VERSION)]);
+    console.log(`[seed] Cargados ${count} productos reales (${BRANDS.length} marcas, ${CATEGORIES.length} categorías).`);
+  });
 }
 
 function makeImage(name, catSlug, brand) {
@@ -256,7 +259,7 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.get("/api/categories", wrap(async (_req, res) => {
   const rows = await db.all(`
-    SELECT c.id, c.name, c.slug, COUNT(p.id) AS product_count
+    SELECT c.id, c.name, c.slug, COUNT(p.id)::int AS product_count
     FROM categories c LEFT JOIN products p ON p.category_id = c.id AND p.active = 1
     GROUP BY c.id ORDER BY c.name
   `);
@@ -373,7 +376,7 @@ app.put("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
 
 app.delete("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
   const id = Number(req.params.id);
-  const count = await db.get("SELECT COUNT(*) AS n FROM products WHERE category_id = ?", [id]);
+  const count = await db.get("SELECT COUNT(*)::int AS n FROM products WHERE category_id = ?", [id]);
   if (count.n > 0) {
     return res.status(400).json({ error: `No se puede eliminar: tiene ${count.n} producto(s). Mueve o elimina primero sus productos.` });
   }
@@ -384,7 +387,7 @@ app.delete("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
 app.get("/api/admin/settings", requireAdmin, wrap(async (_req, res) => {
   res.json({
     categories: await db.all(`
-      SELECT c.id, c.name, c.slug, COUNT(p.id) AS product_count
+      SELECT c.id, c.name, c.slug, COUNT(p.id)::int AS product_count
       FROM categories c LEFT JOIN products p ON p.category_id = c.id
       GROUP BY c.id ORDER BY c.name
     `),
