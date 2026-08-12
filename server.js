@@ -401,6 +401,7 @@ app.use((err, _req, res, _next) => {
 const server = app.listen(PORT, "0.0.0.0", async () => {
   try {
     await initSchema();
+    await migrateColumns();
     await seed();
     await initAdmin();
     console.log(`Tienda de Nutrición corriendo en http://localhost:${PORT} (motor: ${db.engine})`);
