@@ -21,10 +21,15 @@ function renderCategoryCard(cat) {
 
 function renderProductCard(p) {
   const badge = p.featured ? `<span class="product-tag highlight">Destacado</span>` : "";
+  const brandBadge = p.brand ? `<span class="product-tag brand">${p.brand}</span>` : "";
+  const price = p.price > 0
+    ? `${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(p.price)} ${p.unit ? `<small>/${p.unit}</small>` : ""}`
+    : `<span class="muted" style="font-size:0.85rem">Consultar en tienda</span>`;
   return `
     <article class="product-card">
       <a class="product-media" href="/producto.html?id=${p.id}">
         ${badge}
+        ${brandBadge}
         <img src="${p.image}" alt="${p.name}" loading="lazy">
       </a>
       <div class="product-body">
@@ -32,7 +37,7 @@ function renderProductCard(p) {
         <h3><a href="/producto.html?id=${p.id}">${p.name}</a></h3>
         <p class="desc">${p.short_desc}</p>
         <div class="product-footer">
-          <span class="product-price">${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(p.price)} <small>/${p.unit}</small></span>
+          <span class="product-price">${price}</span>
           <a class="product-link" href="/producto.html?id=${p.id}">Ver ficha →</a>
         </div>
       </div>

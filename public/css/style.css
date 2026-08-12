@@ -239,6 +239,40 @@ button { font-family: inherit; cursor: pointer; }
 .category-card h3 { font-family: var(--serif); color: var(--verde-oscuro); font-size: 1.05rem; }
 .category-card .count { font-size: 0.8rem; color: var(--texto-suave); margin-top: 0.25rem; }
 
+/* ---------- Chips de categoría (catálogo fluido) ---------- */
+.cat-chips {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--borde);
+  background: var(--blanco);
+  color: var(--texto);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cat-chip:hover { border-color: var(--verde-medio); color: var(--verde-oscuro); }
+.cat-chip.active {
+  background: var(--verde-oscuro);
+  border-color: var(--verde-oscuro);
+  color: var(--crema);
+}
+.chip-count {
+  font-size: 0.72rem;
+  background: var(--crema-suave);
+  color: var(--texto-suave);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+}
+.cat-chip.active .chip-count { background: rgba(255,255,255,0.2); color: var(--crema); }
+
 /* ---------- Tarjetas de producto ---------- */
 .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.75rem; }
 .product-card {
@@ -260,6 +294,15 @@ button { font-family: inherit; cursor: pointer; }
   padding: 0.3rem 0.75rem; border-radius: 999px;
 }
 .product-tag.highlight { background: var(--acento); }
+.product-tag.brand {
+  top: 12px; right: 12px; left: auto;
+  background: rgba(47, 79, 62, 0.85);
+  backdrop-filter: blur(2px);
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .product-body { padding: 1.35rem 1.35rem 1.5rem; display: flex; flex-direction: column; flex: 1; }
 .product-body .category-label { font-size: 0.72rem; color: var(--verde-medio); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
 .product-body h3 { font-family: var(--serif); font-size: 1.18rem; color: var(--verde-oscuro); margin: 0.35rem 0 0.4rem; line-height: 1.3; }
@@ -430,6 +473,48 @@ td .actions { display: flex; gap: 0.5rem; }
 
 .img-preview { margin-top: 0.5rem; max-width: 200px; border-radius: 10px; border: 1px solid var(--borde); }
 
+/* ---------- Buscador admin ---------- */
+.admin-search {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.admin-search input {
+  flex: 1; max-width: 420px;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  background: var(--blanco);
+}
+.admin-search input:focus { outline: none; border-color: var(--verde-medio); box-shadow: 0 0 0 3px rgba(92, 125, 106, 0.15); }
+
+/* ---------- Gestión de categorías ---------- */
+.cat-manager {
+  margin-top: 3rem;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+}
+.cat-manager h2 { font-family: var(--serif); color: var(--verde-oscuro); font-size: 1.3rem; margin-bottom: 0.25rem; }
+.cat-form { display: flex; gap: 0.75rem; margin: 1.25rem 0; flex-wrap: wrap; }
+.cat-form input {
+  flex: 1; min-width: 220px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+.cat-form input:focus { outline: none; border-color: var(--verde-medio); }
+.cat-list { list-style: none; }
+.cat-item {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px dashed var(--borde);
+}
+.cat-item .cat-name { flex: 1; font-weight: 600; color: var(--verde-oscuro); }
+.cat-actions { display: flex; gap: 0.4rem; }
+
 .notice { padding: 0.9rem 1.1rem; border-radius: 10px; margin-bottom: 1.25rem; font-size: 0.9rem; }
 .notice.success { background: var(--verde-suave); color: var(--verde-oscuro); }
 .notice.error { background: #fbe9e7; color: #a93226; }
@@ -570,4 +655,12 @@ td .actions { display: flex; gap: 0.5rem; }
 
   /* Login */
   .login-card { padding: 1.75rem; }
+
+  /* Admin: buscador y categorías en móvil */
+  .admin-search { flex-wrap: wrap; }
+  .admin-search input { max-width: 100%; }
+  .cat-form input { min-width: 100%; }
+  .cat-form .btn { flex: 1; justify-content: center; }
+  .cat-item { flex-wrap: wrap; }
+  .cat-item .cat-actions { width: 100%; justify-content: flex-end; }
 }

@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import db from "./db.js";
+import { CATEGORIES, BRANDS } from "./products-seed.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -92,6 +93,8 @@ async function initSchema() {
         category_id INTEGER NOT NULL REFERENCES categories(id),
         price NUMERIC NOT NULL DEFAULT 0,
         unit TEXT NOT NULL DEFAULT '',
+        brand TEXT NOT NULL DEFAULT '',
+        stock INTEGER NOT NULL DEFAULT 0,
         short_desc TEXT NOT NULL DEFAULT '',
         long_desc TEXT NOT NULL DEFAULT '',
         image TEXT NOT NULL DEFAULT '',
@@ -116,6 +119,8 @@ async function initSchema() {
         category_id INTEGER NOT NULL REFERENCES categories(id),
         price REAL NOT NULL DEFAULT 0,
         unit TEXT NOT NULL DEFAULT '',
+        brand TEXT NOT NULL DEFAULT '',
+        stock INTEGER NOT NULL DEFAULT 0,
         short_desc TEXT NOT NULL DEFAULT '',
         long_desc TEXT NOT NULL DEFAULT '',
         image TEXT NOT NULL DEFAULT '',
@@ -130,208 +135,90 @@ async function initSchema() {
   }
 }
 
-// ---------- Datos iniciales ----------
-async function seed() {
-  const existing = await db.get("SELECT COUNT(*) AS n FROM categories");
-  if (existing.n > 0) return;
-
-  const cats = [
-    ["Aceites y Grasas Saludables", "aceites"],
-    ["Cereales y Semillas", "cereales"],
-    ["Frutos Secos y Superalimentos", "frutos-secos"],
-    ["Hierbas y Especias", "hierbas"],
-    ["Infusiones y Tés", "infusiones"],
-    ["Mieles y Endulzantes Naturales", "mieles"],
-    ["Suplementos Nutricionales", "suplementos"],
-  ];
-
-  for (const [name, slug] of cats) {
-    await db.run("INSERT INTO categories (name, slug) VALUES (?, ?)", [name, slug]);
-  }
-
-  const catId = async (slug) => (await db.get("SELECT id FROM categories WHERE slug = ?", [slug])).id;
-
-  const products = [
-    {
-      name: "Aceite de Oliva Virgen Extra Ecológico", cat: "aceites", price: 12.5, unit: "500 ml",
-      short: "AOVE prensado en frío de aceitunas arbequinas.",
-      long: "Aceite de oliva virgen extra procedente de cultivo ecológico, obtenido únicamente mediante extracción en frío. Conserva todos los polifenoles y el sabor afrutado característico de la variedad arbequina.",
-      props: ["Rico en ácidos grasos monoinsaturados", "Alto contenido en polifenoles", "Vitamina E"],
-      chars: ["Prensado en frío", "Acidez ≤ 0,2°", "Cultivo ecológico certificado"],
-    },
-    {
-      name: "Aceite de Coco Virgen", cat: "aceites", price: 9.9, unit: "350 g",
-      short: "Aceite de coco prensado en frío, ideal para cocinar.",
-      long: "Aceite de coco virgen extra obtenido por prensado en frío de la pulpa fresca de cocos ecológicos. Aporta triglicéridos de cadena media (MCT) de rápida asimilación.",
-      props: ["MCT de rápida absorción", "Ácido láurico", "Sin refinar"],
-      chars: ["Prensado en frío", "Apto vegano", "Uso culinario y cosmético"],
-    },
-    {
-      name: "Avena Integral Ecológica", cat: "cereales", price: 3.8, unit: "1 kg",
-      short: "Copos de avena integrales de cultivo ecológico.",
-      long: "Copos de avena integral provenientes de agricultura ecológica. Excelente fuente de carbohidratos complejos, fibra soluble (beta-glucanos) y proteína vegetal.",
-      props: ["Alta en beta-glucanos", "Rica en fibra", "Proteína vegetal", "Magnesio y hierro"],
-      chars: ["Sin gluten añadido*", "Cultivo ecológico", "Tostado suave"],
-    },
-    {
-      name: "Quinoa Real Blanca", cat: "cereales", price: 7.2, unit: "500 g",
-      short: "Quinoa real del Altiplano, fuente completa de proteínas.",
-      long: "Quinoa real blanca seleccionada del Altiplano andino. Contiene los nueve aminoácidos esenciales, por lo que es una proteína completa de origen vegetal, naturalmente sin gluten.",
-      props: ["Proteína completa", "Sin gluten", "Rica en fibra", "Hierro y zinc"],
-      chars: ["Lavada y lista para cocinar", "Origen Altiplano", "Apta vegana"],
-    },
-    {
-      name: "Chía Ecológica", cat: "cereales", price: 6.5, unit: "300 g",
-      short: "Semillas de chía ricas en omega-3 y fibra.",
-      long: "Semillas de chía ecológicas de alta pureza. Una de las fuentes vegetales más ricas en ácido alfa-linolénico (omega-3), fibra y minerales como calcio y magnesio.",
-      props: ["Omega-3 (ALA)", "Alta en fibra", "Calcio y magnesio", "Antioxidantes"],
-      chars: ["Cultivo ecológico", "Forma gel al hidratarse", "Apta vegana"],
-    },
-    {
-      name: "Semillas de Lino Dorado", cat: "cereales", price: 4.2, unit: "250 g",
-      short: "Semillas de lino dorado, aliadas de la digestión.",
-      long: "Semillas de lino dorado molidas al momento de envasar para conservar sus propiedades. Ricas en lignanos, fibra y omega-3.",
-      props: ["Lignanos antioxidantes", "Fibra soluble", "Omega-3", "Reguladoras del tránsito"],
-      chars: ["Molidas al envasar", "Sin gluten", "Apto vegano"],
-    },
-    {
-      name: "Almendra Ecológica Tostada", cat: "frutos-secos", price: 8.9, unit: "200 g",
-      short: "Almendras marcona ecológicas tostadas y sin sal.",
-      long: "Almendras ecológicas tostadas suavemente y sin sal añadida. Ricas en vitamina E, magnesio y grasas saludables.",
-      props: ["Vitamina E", "Magnesio", "Grasas monoinsaturadas", "Proteína vegetal"],
-      chars: ["Tostado suave", "Sin sal", "Sin aceite añadido"],
-    },
-    {
-      name: "Nueces de Macadamia Crudas", cat: "frutos-secos", price: 11.9, unit: "200 g",
-      short: "Macadamias crudas con la mayor concentración de grasa monoinsaturada.",
-      long: "Nueces de macadamia crudas sin tostar. Son el fruto seco con mayor contenido en grasas monoinsaturadas, especialmente beneficiosas para el sistema cardiovascular.",
-      props: ["Grasas monoinsaturadas", "Tiamina (B1)", "Manganeso", "Sin colesterol"],
-      chars: ["Crudas", "Sin sal", "Origen controlado"],
-    },
-    {
-      name: "Cacao Puro en Polvo", cat: "frutos-secos", price: 7.8, unit: "250 g",
-      short: "Cacao crudo 100% puro, sin azúcares añadidos.",
-      long: "Cacao en polvo crudo desgrasado, 100% puro, sin azúcares añadidos. Una de las fuentes vegetales más ricas en antioxidantes (flavonoides), magnesio y hierro.",
-      props: ["Flavonoides antioxidantes", "Magnesio", "Hierro", "Teobromina"],
-      chars: ["100% puro", "Sin azúcar añadido", "Crudo (no alcalino)"],
-    },
-    {
-      name: "Bayas de Goji Ecológicas", cat: "frutos-secos", price: 9.5, unit: "200 g",
-      short: "Bayas de goji ricas en antioxidantes y zeaxantina.",
-      long: "Bayas de goji ecológicas deshidratadas de forma natural. Destacan por su contenido en antioxidantes, vitamina C y zeaxantina, compuesto beneficioso para la salud visual.",
-      props: ["Vitamina C", "Zeaxantina", "Polisacáridos", "Antioxidantes"],
-      chars: ["Deshidratadas naturalmente", "Cultivo ecológico", "Sin conservantes"],
-    },
-    {
-      name: "Cúrcuma Raíz Entera", cat: "hierbas", price: 5.6, unit: "100 g",
-      short: "Raíz de cúrcuma entera con alto contenido en curcumina.",
-      long: "Raíz de cúrcuma seleccionada con elevado contenido en curcumina, el principio activo responsable de sus propiedades antioxidantes y antiinflamatorias.",
-      props: ["Curcumina", "Antiinflamatoria", "Antioxidante", "Digestiva"],
-      chars: ["Raíz entera", "Origen controlado", "Sin aditivos"],
-    },
-    {
-      name: "Jengibre Deshidratado en Polvo", cat: "hierbas", price: 4.9, unit: "150 g",
-      short: "Jengibre en polvo picante y aromático.",
-      long: "Jengibre en polvo procedente de raíz deshidratada y molida. Conocido por sus propiedades digestivas, antieméticas y su efecto cálido y picante.",
-      props: ["Gingerol", "Digestivo", "Antiemético", "Efecto cálido"],
-      chars: ["100% raíz de jengibre", "Sin azúcares", "Sin aditivos"],
-    },
-    {
-      name: "Té Verde Matcha Ceremonial", cat: "infusiones", price: 14.9, unit: "30 g",
-      short: "Matcha ceremonial en polvo de primera cosecha.",
-      long: "Matcha ceremonial de primera cosecha, molido en molino de piedra. Rico en L-teanina y catequinas (EGCG), ofrece energía sostenida sin nerviosismo.",
-      props: ["L-teanina", "Catequinas (EGCG)", "Antioxidantes", "Energía sostenida"],
-      chars: ["Primera cosecha", "Molido en piedra", "Grado ceremonial"],
-    },
-    {
-      name: "Infusión de Manzanilla con Anís", cat: "infusiones", price: 3.9, unit: "40 g",
-      short: "Mezcla relajante de manzanilla y anís en hebras.",
-      long: "Mezcla de flores de manzanilla y semillas de anís en hebras. Tradicionalmente utilizada como digestiva y relajante antes de dormir.",
-      props: ["Digestiva", "Relajante", "Calmante natural"],
-      chars: ["En hebras", "Sin aromas artificiales", "Mezcla artesanal"],
-    },
-    {
-      name: "Rooibos de Sudáfrica", cat: "infusiones", price: 4.5, unit: "50 g",
-      short: "Rooibos natural, dulce y sin teína.",
-      long: "Rooibos natural originario de Sudáfrica. Infusión dulce y aromática sin teína, rica en flavonoides como el aspalathin y apta para toda la familia, incluso embarazadas.",
-      props: ["Sin teína", "Flavonoides", "Minerales", "Apto para embarazadas"],
-      chars: ["100% rooibos natural", "Sin teína", "Sin cafeína"],
-    },
-    {
-      name: "Miel de Romero Artesanal", cat: "mieles", price: 8.2, unit: "400 g",
-      short: "Miel monofloral de romero, cruda y sin pasteurizar.",
-      long: "Miel cruda monofloral de romero, extraída en frío y sin pasteurizar. Conserva todas las enzimas y polen activos. Textura cremosa y aroma intenso.",
-      props: ["Enzimas activas", "Polen natural", "Antioxidantes", "Aperitiva"],
-      chars: ["Cruda y sin pasteurizar", "Monofloral", "Producción local"],
-    },
-    {
-      name: "Sirop de Ágave Azul", cat: "mieles", price: 5.4, unit: "350 g",
-      short: "Endulzante natural de bajo índice glucémico.",
-      long: "Sirop de agave azul obtenido de la planta de agave tequilana. Endulzante natural con índice glucémico más bajo que el azúcar refinado.",
-      props: ["Bajo índice glucémico", "Más dulce que el azúcar", "Minerales"],
-      chars: ["100% agave azul", "Sin aditivos", "Apto vegano"],
-    },
-    {
-      name: "Espirulina en Polvo Ecológica", cat: "suplementos", price: 15.5, unit: "200 g",
-      short: "Microalga completa rica en proteínas y clorofila.",
-      long: "Espirulina ecológica en polvo de cultivo controlado. Microalga con hasta un 60% de proteína completa, clorofila, hierro y vitaminas del grupo B.",
-      props: ["Proteína ~60%", "Clorofila", "Hierro", "Vitaminas B"],
-      chars: ["Cultivo controlado", "Ecológica", "Sin excipientes"],
-    },
-    {
-      name: "Proteína Vegetal de Guisante", cat: "suplementos", price: 18.9, unit: "500 g",
-      short: "Proteína aislada de guisante, sin sabor, fácil digestión.",
-      long: "Proteína aislada de guisante al 80% de pureza, sin sabores añadidos. Proteína vegetal de fácil digestión con excelente perfil de aminoácidos, ideal para dietas veganas y deportistas.",
-      props: ["80% proteína", "Aminoácidos esenciales", "Baja en carbohidratos", "Fácil digestión"],
-      chars: ["Sin sabor añadido", "Sin gluten", "Apta vegana"],
-    },
-    {
-      name: "Magnesio Bisglicinato", cat: "suplementos", price: 12.4, unit: "90 cápsulas",
-      short: "Magnesio de alta absorción para músculo y descanso.",
-      long: "Magnesio bisglicinato, forma de magnesio unida al aminoácido glicina que favorece una alta absorción y tolerancia digestiva.",
-      props: ["Alta absorción", "Tolerancia digestiva", "Función muscular", "Descanso"],
-      chars: ["Bisglicinato de magnesio", "90 cápsulas", "Sin gluten y sin lactosa"],
-    },
-    {
-      name: "Complejo de Vitaminas B", cat: "suplementos", price: 10.9, unit: "60 cápsulas",
-      short: "Complejo completo de las 8 vitaminas B esenciales.",
-      long: "Fórmula que reúne las ocho vitaminas del grupo B, fundamentales para el metabolismo energético, el sistema nervioso y la reducción del cansancio y la fatiga.",
-      props: ["Metabolismo energético", "Sistema nervioso", "Reduce el cansancio"],
-      chars: ["8 vitaminas B", "60 cápsulas", "Formato vegano"],
-    },
-  ];
-
-  const colors = [
-    ["#6b8f71", "#dce8df"], ["#b08968", "#f0e4d8"], ["#7f9c5d", "#e3ecd4"],
-    ["#8f9aa0", "#e6eaec"], ["#9b6b43", "#efe2d3"], ["#5c7d6a", "#dbe7dd"],
-    ["#a58b5f", "#ece3d0"], ["#7d7a9b", "#e5e4ef"],
-  ];
-
-  for (let i = 0; i < products.length; i++) {
-    const p = products[i];
-    const [bg, soft] = colors[i % colors.length];
-    const svg = makeImage(p.name, bg, soft, p.cat);
-    const catIdNum = await catId(p.cat);
-    await db.run(
-      `INSERT INTO products (name, category_id, price, unit, short_desc, long_desc, image, properties, characteristics, featured, active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-      [p.name, catIdNum, p.price, p.unit, p.short, p.long, svg,
-       JSON.stringify(p.props), JSON.stringify(p.chars), i % 3 === 0 ? 1 : 0]
-    );
+// ---------- Migración de columnas nuevas (añade brand/stock si no existen) ----------
+async function migrateColumns() {
+  if (db.engine === "postgres") {
+    try { await db.exec(`ALTER TABLE products ADD COLUMN IF NOT EXISTS brand TEXT NOT NULL DEFAULT ''`); } catch {}
+    try { await db.exec(`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 0`); } catch {}
+  } else {
+    try { await db.run(`ALTER TABLE products ADD COLUMN brand TEXT NOT NULL DEFAULT ''`); } catch {}
+    try { await db.run(`ALTER TABLE products ADD COLUMN stock INTEGER NOT NULL DEFAULT 0`); } catch {}
   }
 }
 
-function makeImage(name, bg, soft, catSlug) {
-  const letters = name.split(" ").slice(0, 2).map((w) => w[0]).join("");
-  const catLabel = {
-    aceites: "Aceite",
-    cereales: "Cereales",
-    "frutos-secos": "Fruto Seco",
-    hierbas: "Hierbas",
-    infusiones: "Infusión",
-    mieles: "Endulzante",
-    suplementos: "Suplemento",
-  }[catSlug] || catSlug;
+// Versión de los datos iniciales: si cambia, se re-siembran productos y categorías.
+const SEED_VERSION = 2;
+
+// ---------- Datos iniciales ----------
+const CATEGORY_DESCRIPTIONS = {
+  proteinas: "Proteína en polvo de alta calidad para tu nutrición deportiva.",
+  ganadores: "Fórmula para ganar masa muscular y energía.",
+  creatina: "Creatina de alta pureza para fuerza y rendimiento.",
+  aminoacidos: "Aminoácidos esenciales y BCAA para tu recuperación.",
+  preentrenos: "Energía y enfoque para tus entrenamientos.",
+  quemagrasas: "Complementos para apoyar el control de peso y el metabolismo.",
+  vitaminas: "Vitaminas y minerales esenciales para tu bienestar.",
+  omega: "Ácidos grasos esenciales Omega para tu salud cardiovascular.",
+  plantas: "Plantas medicinales y herbolario natural.",
+  colageno: "Colágeno y complementos para articulaciones y piel.",
+  digestion: "Complementos para la digestión y el tránsito.",
+  descanso: "Complementos para el descanso y el bienestar.",
+  perros: "Alimentación de calidad para tu perro.",
+  gatos: "Alimentación de calidad para tu gato.",
+  otros: "Higiene, cosmética y otros complementos.",
+};
+
+async function resetCatalog() {
+  await db.run("DELETE FROM products");
+  await db.run("DELETE FROM categories");
+  try {
+    await db.run("DELETE FROM sqlite_sequence WHERE name IN ('products','categories')");
+  } catch {}
+}
+
+async function seed() {
+  const stored = (await db.get("SELECT value FROM settings WHERE key = 'seed_version'"))?.value;
+  if (stored === String(SEED_VERSION)) return;
+
+  await resetCatalog();
+
+  for (const cat of CATEGORIES) {
+    await db.run("INSERT INTO categories (name, slug) VALUES (?, ?)", [cat.name, cat.slug]);
+  }
+  const catId = async (slug) => (await db.get("SELECT id FROM categories WHERE slug = ?", [slug])).id;
+
+  let count = 0;
+  for (const brand of BRANDS) {
+    for (const p of brand.items) {
+      const cid = await catId(p.cat);
+      const image = makeImage(`${brand.brand} ${p.name}`, p.cat, brand.brand);
+      const short = CATEGORY_DESCRIPTIONS[p.cat] || "";
+      await db.run(
+        `INSERT INTO products (name, category_id, price, unit, brand, stock, short_desc, long_desc, image, properties, characteristics, featured, active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [p.name, cid, 0, p.unit || "", brand.brand, p.stock || 0, short,
+         `${short} Marca ${brand.brand}. Consulta en tienda para más información.`,
+         image, JSON.stringify([]), JSON.stringify([`Marca: ${brand.brand}`, p.unit ? `Presentación: ${p.unit}` : ""].filter(Boolean)), 0, p.stock > 0 ? 1 : 0]
+      );
+      count++;
+    }
+  }
+
+  await db.run("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", ["seed_version", String(SEED_VERSION)]);
+  console.log(`[seed] Cargados ${count} productos reales (${BRANDS.length} marcas, ${CATEGORIES.length} categorías).`);
+}
+
+function makeImage(name, catSlug, brand) {
+  const palette = [
+    ["#5c7d6a", "#dbe7dd"], ["#7f9c5d", "#e3ecd4"], ["#b08968", "#f0e4d8"],
+    ["#8f9aa0", "#e6eaec"], ["#9b6b43", "#efe2d3"], ["#a58b5f", "#ece3d0"],
+    ["#7d7a9b", "#e5e4ef"], ["#6b8f71", "#dce8df"], ["#a1674f", "#f0dfd2"],
+    ["#4f7d8c", "#d8e8ee"], ["#9c6a8e", "#eadcec"], ["#7d8c4f", "#e6ecd4"],
+  ];
+  const hash = [...name].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const [bg, soft] = palette[hash % palette.length];
+  const letters = (name.split(" ").slice(0, 2).map((w) => w[0] || "").join("") || "🌿").toUpperCase();
+  const catLabel = (CATEGORIES.find((c) => c.slug === catSlug)?.name || "").split(" ")[0];
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
   <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0%" stop-color="${soft}"/><stop offset="100%" stop-color="${bg}"/>
@@ -346,9 +233,9 @@ function makeImage(name, bg, soft, catSlug) {
   <text x="400" y="430" font-family="Georgia, serif" font-size="34" fill="#ffffff" text-anchor="middle" font-weight="bold">${letters}</text>
   <text x="400" y="470" font-family="Arial, sans-serif" font-size="20" fill="#ffffff" text-anchor="middle" opacity="0.85">${catLabel}</text>
 </svg>`;
-  const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-");
+  const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const file = path.join(__dirname, "public", "img", `${slug}.svg`);
-  fs.writeFileSync(file, svg);
+  try { fs.writeFileSync(file, svg); } catch {}
   return `/img/${slug}.svg`;
 }
 
@@ -378,12 +265,12 @@ app.get("/api/categories", wrap(async (_req, res) => {
 
 app.get("/api/products", wrap(async (req, res) => {
   const { category, search, featured } = req.query;
-  let sql = `SELECT * FROM products WHERE active = 1`;
+  let sql = `SELECT * FROM products WHERE active = 1 AND stock > 0`;
   const params = [];
   if (category) { sql += ` AND category_id = ?`; params.push(category); }
-  if (search) { sql += ` AND (name LIKE ? OR short_desc LIKE ? OR long_desc LIKE ?)`; params.push(`%${search}%`, `%${search}%`, `%${search}%`); }
+  if (search) { sql += ` AND (name LIKE ? OR short_desc LIKE ? OR long_desc LIKE ? OR brand LIKE ?)`; params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`); }
   if (featured) { sql += ` AND featured = 1`; }
-  sql += ` ORDER BY featured DESC, name`;
+  sql += ` ORDER BY brand, name`;
   const rows = await db.all(sql, params);
   for (const r of rows) {
     r.properties = JSON.parse(r.properties);
@@ -393,13 +280,13 @@ app.get("/api/products", wrap(async (req, res) => {
 }));
 
 app.get("/api/products/featured", wrap(async (_req, res) => {
-  const rows = await db.all("SELECT * FROM products WHERE active = 1 AND featured = 1 LIMIT 6");
+  const rows = await db.all("SELECT * FROM products WHERE active = 1 AND featured = 1 AND stock > 0 LIMIT 6");
   for (const r of rows) { r.properties = JSON.parse(r.properties); r.characteristics = JSON.parse(r.characteristics); }
   res.json(rows);
 }));
 
 app.get("/api/products/:id", wrap(async (req, res) => {
-  const row = await db.get("SELECT * FROM products WHERE id = ? AND active = 1", [Number(req.params.id)]);
+  const row = await db.get("SELECT * FROM products WHERE id = ? AND active = 1 AND stock > 0", [Number(req.params.id)]);
   if (!row) return res.status(404).json({ error: "Producto no encontrado" });
   row.properties = JSON.parse(row.properties);
   row.characteristics = JSON.parse(row.characteristics);
@@ -433,10 +320,10 @@ app.post("/api/admin/products", requireAdmin, wrap(async (req, res) => {
     }
   }
   const id = await db.insert(
-    `INSERT INTO products (name, category_id, price, unit, short_desc, long_desc, image, properties, characteristics, featured, active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [p.name, Number(p.category_id), Number(p.price), p.unit || "", p.short_desc, p.long_desc,
-     p.image || "", JSON.stringify(p.properties || []), JSON.stringify(p.characteristics || []),
+    `INSERT INTO products (name, category_id, price, unit, brand, stock, short_desc, long_desc, image, properties, characteristics, featured, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [p.name, Number(p.category_id), Number(p.price), p.unit || "", p.brand || "", Number(p.stock) || 0,
+     p.short_desc, p.long_desc, p.image || "", JSON.stringify(p.properties || []), JSON.stringify(p.characteristics || []),
      p.featured ? 1 : 0, p.active === undefined || p.active ? 1 : 0]
   );
   res.status(201).json({ id });
@@ -446,11 +333,11 @@ app.put("/api/admin/products/:id", requireAdmin, wrap(async (req, res) => {
   const p = req.body || {};
   await db.run(
     `UPDATE products SET
-      name = ?, category_id = ?, price = ?, unit = ?, short_desc = ?, long_desc = ?,
+      name = ?, category_id = ?, price = ?, unit = ?, brand = ?, stock = ?, short_desc = ?, long_desc = ?,
       image = ?, properties = ?, characteristics = ?, featured = ?, active = ?
      WHERE id = ?`,
-    [p.name, Number(p.category_id), Number(p.price), p.unit || "", p.short_desc, p.long_desc,
-     p.image || "", JSON.stringify(p.properties || []), JSON.stringify(p.characteristics || []),
+    [p.name, Number(p.category_id), Number(p.price), p.unit || "", p.brand || "", Number(p.stock) || 0,
+     p.short_desc, p.long_desc, p.image || "", JSON.stringify(p.properties || []), JSON.stringify(p.characteristics || []),
      p.featured ? 1 : 0, p.active === undefined || p.active ? 1 : 0,
      Number(req.params.id)]
   );
@@ -463,15 +350,44 @@ app.delete("/api/admin/products/:id", requireAdmin, wrap(async (req, res) => {
 }));
 
 app.post("/api/admin/categories", requireAdmin, wrap(async (req, res) => {
-  const { name, slug } = req.body || {};
-  if (!name || !slug) return res.status(400).json({ error: "name y slug son obligatorios" });
-  await db.run("INSERT INTO categories (name, slug) VALUES (?, ?)", [name, slug]);
+  const { name } = req.body || {};
+  if (!name || !name.trim()) return res.status(400).json({ error: "El nombre es obligatorio" });
+  const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const existing = await db.get("SELECT id FROM categories WHERE slug = ?", [slug]);
+  if (existing) return res.status(400).json({ error: "Ya existe una categoría con ese nombre" });
+  await db.run("INSERT INTO categories (name, slug) VALUES (?, ?)", [name.trim(), slug]);
   res.status(201).json({ ok: true });
+}));
+
+app.put("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
+  const { name } = req.body || {};
+  if (!name || !name.trim()) return res.status(400).json({ error: "El nombre es obligatorio" });
+  const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const dup = await db.get("SELECT id FROM categories WHERE slug = ? AND id != ?", [slug, Number(req.params.id)]);
+  if (dup) return res.status(400).json({ error: "Ya existe una categoría con ese nombre" });
+  await db.run("UPDATE categories SET name = ?, slug = ? WHERE id = ?", [name.trim(), slug, Number(req.params.id)]);
+  res.json({ ok: true });
+}));
+
+app.delete("/api/admin/categories/:id", requireAdmin, wrap(async (req, res) => {
+  const id = Number(req.params.id);
+  const count = await db.get("SELECT COUNT(*) AS n FROM products WHERE category_id = ?", [id]);
+  if (count.n > 0) {
+    return res.status(400).json({ error: `No se puede eliminar: tiene ${count.n} producto(s). Mueve o elimina primero sus productos.` });
+  }
+  await db.run("DELETE FROM categories WHERE id = ?", [id]);
+  res.json({ ok: true });
 }));
 
 app.get("/api/admin/settings", requireAdmin, wrap(async (_req, res) => {
   res.json({
-    categories: await db.all("SELECT * FROM categories ORDER BY name"),
+    categories: await db.all(`
+      SELECT c.id, c.name, c.slug, COUNT(p.id) AS product_count
+      FROM categories c LEFT JOIN products p ON p.category_id = c.id
+      GROUP BY c.id ORDER BY c.name
+    `),
   });
 }));
 

@@ -1,14 +1,4 @@
 // Página de catálogo
-const CATEGORY_ICONS = {
-  "aceites": "🫒",
-  "cereales": "🌾",
-  "frutos-secos": "🥜",
-  "hierbas": "🌿",
-  "infusiones": "🍵",
-  "mieles": "🍯",
-  "suplementos": "💊",
-};
-
 const state = {
   categories: [],
   activeCategory: null,
@@ -21,21 +11,17 @@ function renderCategories() {
   const active = params.get("categoria");
 
   const allBtn = `
-    <button class="category-card" data-cat="" style="border-color:${!active ? "var(--verde-medio)" : "var(--borde)"}; cursor:pointer">
-      <div class="icon">🛒</div>
-      <h3>Todos</h3>
-      <div class="count">${state.categories.reduce((a, c) => a + c.product_count, 0)} productos</div>
+    <button class="cat-chip ${!active ? "active" : ""}" data-cat="">
+      Todos
     </button>`;
 
   grid.innerHTML = allBtn + state.categories.map((cat) => `
-    <button class="category-card" data-cat="${cat.id}" style="border-color:${String(active) === String(cat.id) ? "var(--verde-medio)" : "var(--borde)"}; cursor:pointer">
-      <div class="icon">${CATEGORY_ICONS[cat.slug] || "🌿"}</div>
-      <h3>${cat.name}</h3>
-      <div class="count">${cat.product_count} producto${cat.product_count === 1 ? "" : "s"}</div>
+    <button class="cat-chip ${String(active) === String(cat.id) ? "active" : ""}" data-cat="${cat.id}">
+      ${cat.name} <span class="chip-count">${cat.product_count}</span>
     </button>
   `).join("");
 
-  grid.querySelectorAll(".category-card").forEach((btn) => {
+  grid.querySelectorAll(".cat-chip").forEach((btn) => {
     btn.addEventListener("click", () => {
       const url = new URL(window.location.href);
       if (btn.dataset.cat) url.searchParams.set("categoria", btn.dataset.cat);
@@ -59,6 +45,7 @@ function renderProducts(products) {
     <article class="product-card">
       <a class="product-media" href="/producto.html?id=${p.id}">
         ${p.featured ? `<span class="product-tag highlight">Destacado</span>` : ""}
+        ${p.brand ? `<span class="product-tag brand">${p.brand}</span>` : ""}
         <img src="${p.image}" alt="${p.name}" loading="lazy">
       </a>
       <div class="product-body">
@@ -66,7 +53,7 @@ function renderProducts(products) {
         <h3><a href="/producto.html?id=${p.id}">${p.name}</a></h3>
         <p class="desc">${p.short_desc}</p>
         <div class="product-footer">
-          <span class="product-price">${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(p.price)} <small>/${p.unit}</small></span>
+          <span class="product-price">${priceText(p)}</span>
           <a class="product-link" href="/producto.html?id=${p.id}">Ver ficha →</a>
         </div>
       </div>
@@ -81,6 +68,11 @@ function renderProducts(products) {
   else title.textContent = "Todos los productos";
 
   count.textContent = `${products.length} producto${products.length === 1 ? "" : "s"}`;
+}
+
+function priceText(p) {
+  if (p.price > 0) return `${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(p.price)} ${p.unit ? `<small>/${p.unit}</small>` : ""}`;
+  return `<span class="muted" style="font-size:0.85rem">Consultar en tienda</span>`;
 }
 
 async function loadProducts() {

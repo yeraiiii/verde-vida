@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Administración · Verde Vida</title>
+  <title>Panel de Administración · Herboristería Pasaje</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -45,22 +45,39 @@
 
           <div id="admin-notice" class="notice hidden"></div>
 
+          <div class="admin-search">
+            <input type="search" id="admin-search" placeholder="Buscar producto por nombre, marca o sabor…">
+            <span id="search-count" class="muted"></span>
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Imagen</th>
                   <th>Producto</th>
+                  <th>Marca</th>
                   <th>Categoría</th>
                   <th>Precio</th>
+                  <th>Stock</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody id="products-tbody">
-                <tr><td colspan="6" class="text-center muted"><div class="spinner"></div> Cargando…</td></tr>
+                <tr><td colspan="8" class="text-center muted"><div class="spinner"></div> Cargando…</td></tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="cat-manager">
+            <h2>Gestión de categorías</h2>
+            <p class="muted">Las categorías agrupan los productos en el catálogo.</p>
+            <div class="cat-form">
+              <input type="text" id="cat-name" placeholder="Nombre de la nueva categoría">
+              <button class="btn btn-primary" id="btn-add-cat">+ Añadir categoría</button>
+            </div>
+            <ul id="cat-list" class="cat-list"></ul>
           </div>
         </div>
       </section>
@@ -82,12 +99,20 @@
                 <select id="f-category" required></select>
               </div>
               <div class="field">
+                <label for="f-brand">Marca</label>
+                <input type="text" id="f-brand" placeholder="REVER, ESSENTIAL, PINISAN…">
+              </div>
+              <div class="field">
+                <label for="f-unit">Presentación</label>
+                <input type="text" id="f-unit" placeholder="2 kg, 300 g, 90 cápsulas…">
+              </div>
+              <div class="field">
                 <label for="f-price">Precio (€) *</label>
                 <input type="number" id="f-price" step="0.01" min="0" required>
               </div>
               <div class="field">
-                <label for="f-unit">Unidad</label>
-                <input type="text" id="f-unit" placeholder="500 ml, 1 kg…">
+                <label for="f-stock">Stock (unidades)</label>
+                <input type="number" id="f-stock" step="1" min="0" value="0">
               </div>
               <div class="field full">
                 <label for="f-short">Descripción corta *</label>
@@ -98,8 +123,10 @@
                 <textarea id="f-long" rows="4" required></textarea>
               </div>
               <div class="field full">
-                <label for="f-image">URL de imagen</label>
-                <input type="text" id="f-image" placeholder="/img/producto.svg o https://…">
+                <label for="f-image">Imagen del producto (desde galería o archivos)</label>
+                <input type="file" id="f-image-file" accept="image/*">
+                <input type="hidden" id="f-image">
+                <div id="f-image-hint" class="muted" style="font-size:0.8rem; margin-top:0.3rem">Si no eliges imagen, se mantiene la actual o se genera una automática.</div>
                 <img id="f-image-preview" class="img-preview hidden" alt="Vista previa">
               </div>
             </div>

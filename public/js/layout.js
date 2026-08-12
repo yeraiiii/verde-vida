@@ -1,13 +1,18 @@
 // Header y footer compartidos
+const SITE_NAME = "Herboristería Pasaje";
+const SITE_TAGLINE = "Alimentación & Nutrición";
+const CONTACT_PHONE = "685137329";
+const CONTACT_EMAIL = "herboristeriapasaje@hotmail.com";
+
 const HEADER_HTML = `
-  <div class="topbar">Envío gratuito a partir de 49 € · Productos ecológicos seleccionados</div>
+  <div class="topbar">Herboristería Pasaje · Nutrición y complementos naturales · ☎ ${CONTACT_PHONE}</div>
   <header class="site-header">
     <div class="container">
       <a class="logo" href="/">
         <div class="logo-icon">🌿</div>
         <div class="logo-text">
-          <div class="name">Verde Vida</div>
-          <div class="tagline">Alimentación &amp; Nutrición</div>
+          <div class="name">${SITE_NAME}</div>
+          <div class="tagline">${SITE_TAGLINE}</div>
         </div>
       </a>
       <nav class="main-nav" id="main-nav">
@@ -27,7 +32,7 @@ const FOOTER_HTML = `
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <h4>Verde Vida</h4>
+          <h4>${SITE_NAME}</h4>
           <p>Herboristería y tienda de nutrición natural. Productos ecológicos, frescos y seleccionados para cuidar tu salud cada día.</p>
         </div>
         <div>
@@ -42,14 +47,13 @@ const FOOTER_HTML = `
         <div>
           <h4>Contacto</h4>
           <ul>
-            <li><a href="mailto:hola@verdevida.example">hola@verdevida.example</a></li>
-            <li><a href="tel:+34900000000">+34 900 000 000</a></li>
-            <li>Calle del Boticario 12, Madrid</li>
+            <li><a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></li>
+            <li><a href="tel:${CONTACT_PHONE}">☎ ${CONTACT_PHONE}</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
-        <span>© ${new Date().getFullYear()} Verde Vida. Todos los derechos reservados.</span>
+        <span>© ${new Date().getFullYear()} ${SITE_NAME}. Todos los derechos reservados.</span>
         <span>Catálogo informativo — consulta con tu especialista antes de consumir suplementos.</span>
       </div>
     </div>

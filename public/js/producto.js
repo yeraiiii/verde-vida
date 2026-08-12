@@ -17,7 +17,7 @@ async function init() {
 
     const cat = categories.find((c) => c.id === product.category_id);
     document.getElementById("crumb-cat").textContent = cat ? cat.name : "";
-    document.title = `${product.name} · Verde Vida`;
+    document.title = `${product.name} · Herboristería Pasaje`;
 
     const props = (product.properties || []).map(
       (x) => `<span class="prop-chip">🌿 ${x}</span>`
@@ -27,15 +27,19 @@ async function init() {
       (x) => `<li>${x}</li>`
     ).join("");
 
+    const price = product.price > 0
+      ? `${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(product.price)} <small>/ ${product.unit}</small>`
+      : `<span class="muted" style="font-size:1.1rem; font-weight:500">Consultar en tienda</span>`;
+
     root.innerHTML = `
       <div class="product-detail">
         <div class="product-detail-media">
           <img src="${product.image}" alt="${product.name}">
         </div>
         <div>
-          <div class="detail-category">${cat ? cat.name : ""} · ${product.unit}</div>
+          <div class="detail-category">${cat ? cat.name : ""}${product.brand ? ` · ${product.brand}` : ""}${product.unit ? ` · ${product.unit}` : ""}</div>
           <h1>${product.name}</h1>
-          <div class="detail-price">${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(product.price)} <small>/ ${product.unit}</small></div>
+          <div class="detail-price">${price}</div>
           <p class="detail-short">${product.short_desc}</p>
           <p class="detail-long">${product.long_desc}</p>
 
