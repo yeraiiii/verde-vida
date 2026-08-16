@@ -32,8 +32,23 @@
           </form>
         </div>
 
-        <div class="cat-chips" id="categorias" style="margin-bottom:2rem"></div>
-        <p class="muted" style="text-align:center; font-size:0.85rem; margin-bottom:2rem" id="cat-hint">Filtra por categoría para ver los productos directamente.</p>
+        <div class="cat-chips" id="categorias" style="margin-bottom:1.5rem"></div>
+
+        <div class="chips-label">Buscar por sabor</div>
+        <div class="cat-chips" id="sabores" style="margin-bottom:1.75rem"></div>
+
+        <div class="filter-bar">
+          <select id="filter-brand" class="filter-select">
+            <option value="">Todas las marcas</option>
+          </select>
+          <select id="filter-sort" class="filter-select">
+            <option value="">Ordenar por</option>
+            <option value="name">Nombre (A–Z)</option>
+            <option value="price-asc">Precio: de menor a mayor</option>
+            <option value="price-desc">Precio: de mayor a menor</option>
+          </select>
+          <button type="button" id="filter-clear" class="clear-filters">Limpiar filtros</button>
+        </div>
       </div>
     </section>
 

@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import db from "./db.js";
 import { CATEGORIES, BRANDS } from "./products-seed.js";
+import { norm, FLAVORS, flavorsOfName, matchesFlavor } from "./filters.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -269,19 +270,114 @@ app.get("/api/categories", wrap(async (_req, res) => {
   res.json(rows);
 }));
 
-app.get("/api/products", wrap(async (req, res) => {
-  const { category, search, featured } = req.query;
-  let sql = `SELECT * FROM products WHERE active = 1 AND stock > 0`;
-  const params = [];
-  if (category) { sql += ` AND category_id = ?`; params.push(category); }
-  if (search) { sql += ` AND (name LIKE ? OR short_desc LIKE ? OR long_desc LIKE ? OR brand LIKE ?)`; params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`); }
-  if (featured) { sql += ` AND featured = 1`; }
-  sql += ` ORDER BY brand, name`;
-  const rows = await db.all(sql, params);
+// Lista de sabores y marcas disponibles (para los filtros del catálogo).
+app.get("/api/filters", wrap(async (_req, res) => {
+  const rows = await db.all(
+    `SELECT p.name, p.brand FROM products p WHERE p.active = 1 AND p.stock > 0`
+  );
+  const count = {};
+  const brands = {};
   for (const r of rows) {
-    r.properties = JSON.parse(r.properties);
-    r.characteristics = JSON.parse(r.characteristics);
+    for (const slug of flavorsOfName(r.name)) count[slug] = (count[slug] || 0) + 1;
+    if (r.brand) brands[r.brand] = (brands[r.brand] || 0) + 1;
   }
+  const flavors = FLAVORS
+    .filter((f) => count[f.slug])
+    .map((f) => ({ slug: f.slug, name: f.name, product_count: count[f.slug] }))
+    .sort((a, b) => b.product_count - a.product_count);
+  const brandsList = Object.entries(brands)
+    .map(([name, product_count]) => ({ name, product_count }))
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  res.json({ flavors, brands: brandsList });
+}));
+
+app.get("/api/products", wrap(async (req, res) => {
+  const { category, search, featured, flavor, brand, sort } = req.query;
+  let sql = `SELECT p.*, c.name AS category_name
+             FROM products p LEFT JOIN categories c ON c.id = p.category_id
+             WHERE p.active = 1 AND p.stock > 0`;
+  const params = [];
+  if (category) { sql += ` AND p.category_id = ?`; params.push(category); }
+  if (featured) { sql += ` AND p.featured = 1`; }
+
+  let rows = await db.all(sql, params);
+
+  // Búsqueda: cada palabra del término debe aparecer (sin distinción de mayúsculas/acentos).
+  let searched = false;
+  let searchTokens = [];
+  if (search && String(search).trim()) {
+    searched = true;
+    searchTokens = norm(search).split(" ").filter(Boolean);
+    const searchable = (p) => norm(
+      `${p.name} ${p.short_desc} ${p.long_desc} ${p.brand} ${p.category_name} ${p.unit}`
+    );
+    const countTokens = (p) => {
+      const hay = searchable(p);
+      return searchTokens.filter((t) => hay.includes(t)).length;
+    };
+    let matched = rows.filter((p) => countTokens(p) === searchTokens.length);
+    // Modo tolerante: si no hay resultados exactos, devolvemos lo que coincide
+    // con alguna palabra, ordenado por cuántas se cumplen.
+    if (!matched.length && searchTokens.length > 1) {
+      matched = rows.filter((p) => countTokens(p) > 0);
+      matched.forEach((p) => { p.__matchCount = countTokens(p); });
+    } else {
+      matched.forEach((p) => { p.__matchCount = searchTokens.length; });
+    }
+    rows = matched;
+  }
+
+  // Filtro por sabor (derivado del nombre).
+  if (flavor) {
+    rows = rows.filter((p) => matchesFlavor(p.name, flavor));
+  }
+
+  // Filtro por marca.
+  if (brand) {
+    const brandNorm = norm(brand);
+    rows = rows.filter((p) => norm(p.brand) === brandNorm);
+  }
+
+  // Relevancia (solo cuando se buscó) y orden.
+  if (searched) {
+    const score = (p) => {
+      const name = norm(p.name);
+      let s = (p.__matchCount || 0) * 10;
+      for (const t of searchTokens) {
+        if (name.includes(t)) s += 3;
+        if (p.short_desc && norm(p.short_desc).includes(t)) s += 1;
+        if (p.brand && norm(p.brand).includes(t)) s += 1;
+        if (p.category_name && norm(p.category_name).includes(t)) s += 1;
+      }
+      if (p.featured) s += 1;
+      return s;
+    };
+    rows.sort((a, b) => score(b) - score(a) || norm(a.name).localeCompare(norm(b.name), "es"));
+    rows.forEach((p) => { delete p.__matchCount; });
+  } else {
+    switch (sort) {
+      case "name":
+        rows.sort((a, b) => norm(a.name).localeCompare(norm(b.name), "es"));
+        break;
+      case "price-asc":
+        rows.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        rows.sort((a, b) => b.price - a.price);
+        break;
+      default:
+        rows.sort((a, b) => norm(a.brand).localeCompare(norm(b.brand), "es") || norm(a.name).localeCompare(norm(b.name), "es"));
+    }
+  }
+
+  // Adjunta sabores del producto.
+  rows = rows.map((p) => ({
+    ...p,
+    flavors: flavorsOfName(p.name),
+    properties: JSON.parse(p.properties),
+    characteristics: JSON.parse(p.characteristics),
+  }));
+
   res.json(rows);
 }));
 
@@ -296,6 +392,7 @@ app.get("/api/products/:id", wrap(async (req, res) => {
   if (!row) return res.status(404).json({ error: "Producto no encontrado" });
   row.properties = JSON.parse(row.properties);
   row.characteristics = JSON.parse(row.characteristics);
+  row.flavors = flavorsOfName(row.name);
   res.json(row);
 }));
 
